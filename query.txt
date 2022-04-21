@@ -1,0 +1,101 @@
+use dbname;
+create table books (
+	isbn char(10),
+    title char(8),
+    author char(80),
+    qty_in_stock integer,
+    price real,
+    year_published year,
+    primary key(isbn)
+);
+
+create table customers (
+	cid integer,
+    cname char(80),
+    address char(200),
+    primary key(cid)
+);
+
+create table orders (
+	ordernum integer,
+    isbn char(10),
+    cid integer,
+    cardnum char(16),
+    qty integer,
+    order_date date,
+    ship_date date,
+    primary key(ordernum),
+    foreign key(isbn) references books(isbn),
+    foreign key(cid) references customers(cid)
+);
+
+create procedure searchby_author (in author char(80)) select * from books b where b.author=author; 
+create procedure searchby_title (in title char(8)) select * from books b where b.title=title; 
+create procedure searchby_isbn (in isbn char(10)) select * from books b where b.isbn=isbn; 
+
+
+
+insert into books values 
+('9948342160', 'MYSQL', 'Mer Lisava', 24, 2500, '2014'),
+('8247096496', 'MYSQL', 'Cur Levindis', 26, 2750, '2015'),
+('7032145089', 'JDBC', 'Keiron Pollard', 16, 1500, '2009'),
+('9603649040', 'JAVA', 'Wasin Jaffer', 30, 1000, '2010');
+
+insert into customers values 
+(4253, 'Kane Williamson', "67, 71st Avenue, Vidhyanagar"),
+(7658, 'Jason Holder', "92, 31st Avenue, Navanagar"),
+(8763, 'Trent Boult', "89, 4th Avenue, Navalur"),
+(9984, 'Abhisekh Sharma', "89, 45th Avenue, Hubli"),
+(8903, 'Natarajan', "6, 18th Avenue, Dharwad"),
+(1795, 'Bhuvaneshwar', "9, 9th Avenue, Unkal"),
+(1906, 'Aidem Markram', "89, 3rd Avenue, Vidhyanagar");
+
+insert into orders values 
+(6578, '9948342160', 4253, '4466515621334867', 4, '2020-05-11', '2020-05-17'),
+(2785, '9948342160', 7658, '5641616635165165', 8, '2020-05-09', '2020-05-11'),
+(1790, '8247096496', 8763, '4652321354646161', 8, '2020-05-06', '2020-05-10'),
+(8962, '8247096496', 9984, '1415661516463165', 5, '2020-05-11', '2020-05-17'),
+(8964, '7032145089', 8903, '8446513531351659', 6, '2020-05-25', '2020-05-30'),
+(1564, '7032145089', 1795, '1313466464644546', 2, '2020-05-22', '2020-05-25'),
+(1789, '9603649040', 1906, '5461615316165465', 1, '2020-05-27', '2020-05-31'),
+(4670, '9603649040', 4253, '4846111646466464', 8, '2020-05-21', '2020-05-25'),
+(2097, '8247096496', 1795, '6416446545465464', 3, '2020-05-12', '2020-05-16'),
+(1667, '7032145089', 4253, '1354646165464619', 1, '2020-05-15', '2020-05-18');
+
+alter table customers add column login char(20) after address;
+alter table customers add column password char(20) after login;
+update  customers set login = 'kdb12' where cid=4253;
+update  customers set password = 'kdb12mc' where cid=4253;
+update  customers set login = 'pf18' where cid=7658;
+update  customers set password = 'pf18mc' where cid=7658;
+update  customers set login = 'jg10' where cid=8763;
+update  customers set password = 'jg10mc' where cid=8763;
+update  customers set login = 'bm15' where cid=9984;
+update  customers set password = 'bm15ch' where cid=9984;
+update  customers set login = 'jc20' where cid=8903;
+update  customers set password = 'jc20mc' where cid=8903;
+update  customers set login = 'vvd36' where cid=1795;
+update  customers set password = 'vvd36lv' where cid=1795;
+update  customers set login = 'saa50' where cid=1906;
+update  customers set password = 'saa5lv' where cid=1906;
+
+create procedure ccheckout(in cid integer) select * from orders o where o.cid=cid;
+create procedure orderstatus(in ordernum integer) select * from orders where ship_date<'2022-04-17';
+create procedure customerinfo(in cid integer) select * from customers c where c.cid=cid;
+create procedure updateshipdate(in isbn char(10), ordernum integer, ship_date date) update orders o set o.ship_date=ship_date where o.isbn=isbn and o.ordernum=ordernum;
+
+update orders set ship_date='2022-04-18' where ordernum=6578;
+update orders set ship_date='2022-04-20' where ordernum=7658;
+update orders set ship_date='2022-04-23' where ordernum=1790;
+update orders set ship_date='2022-04-18' where ordernum=8962;
+update orders set ship_date='2022-04-18' where ordernum=8964;
+update orders set ship_date='2022-04-18' where ordernum=1564;
+update orders set ship_date='2022-04-18' where ordernum=1789;
+update orders set ship_date='2022-04-23' where ordernum=4670;
+update orders set ship_date='2022-04-20' where ordernum=2097;
+update orders set ship_date='2022-04-18' where ordernum=1667;
+
+alter table orders add column finalprice real after ship_date;
+create procedure cal_price(in ordernum integer) update orders o, books b set finalprice=o.qty*b.price where o.ordernum=ordernum; 
+alter table orders drop column finalprice;
+create procedure inc_inv(in isbn char(10), newqty integer) update books set qty_in_stock=qty_in_stock+newqty where books.isbn=isbn;
